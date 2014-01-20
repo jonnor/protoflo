@@ -1,0 +1,50 @@
+{
+    "properties": {
+        "name": "runlight",
+        "environment": {
+            "runtime": "pyflo"
+        }
+    },
+    "exports": [],
+    "groups": [],
+    "processes": {
+        "invert1": {
+            "component": "Invert",
+            "metadata": {
+                "x": 1174,
+                "y": 48,
+                "label": "invert1"
+            }
+        },
+        "invert2": { "component": "Invert" },
+        "stringify": { "component": "Str" },
+        "output": { "component": "WriteStdOut" }
+    },
+    "connections": [
+        {
+            "src": {
+                "process": "invert1",
+                "port": "out"
+            },
+            "tgt": {
+                "process": "invert2",
+                "port": "in"
+            }
+        },
+        {
+            "src": { "process": "invert2", "port": "out" },
+            "tgt": { "process": "stringify", "port": "in" }
+        },
+        {
+            "src": { "process": "stringify", "port": "out" },
+            "tgt": { "process": "output", "port": "in" }
+        },
+        {
+            "data": false,
+            "tgt": {
+                "process": "invert1",
+                "port": "in"
+            }
+        }
+    ]
+}
