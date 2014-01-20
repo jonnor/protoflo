@@ -121,10 +121,15 @@ def load_file(path):
         raise ValueError, "Invalid format for file %s" % path
 
 
-def test2():
-    net = Network(load_file("examples/first.fbp"))
+if __name__ == "__main__":
+
+    prog, args = sys.argv[0], sys.argv[1:]
+    if not len(args) == 1:
+        sys.stderr.write("Usage: %s FILE\n" % prog)
+        sys.exit(1)
+
+    path = args[0]
+
+    net = Network(load_file(path))
     net.start()
     net.run_iteration()
-
-if __name__ == "__main__":
-    test2()
