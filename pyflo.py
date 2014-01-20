@@ -121,6 +121,54 @@ def load_file(path):
         raise ValueError, "Invalid format for file %s" % path
 
 
+from autobahn.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from twisted.python import log
+from twisted.internet import reactor
+
+class MyServerProtocol(WebSocketServerProtocol):
+
+    def onConnect(self, request):
+        pass
+
+    def onOpen(self):
+        pass
+
+    def onClose(self, wasClean, code, reason):
+        pass
+
+    def onMessage(self, payload, isBinary):
+        if isBinary:
+            raise ValueError, "WebSocket message must be UTF-8"
+
+        cmd = json.loads(payload)
+        print cmd
+
+        if cmd['protocol'] == 'component' and cmd['command'] == 'list':
+            for name, comp in components.items():
+                payload = { "name": name,
+                        "description": "",
+                        "inPorts": [ {"id": "in", "type": "all" } ],
+                        "outPorts": [ {"id": "out", "type": "all" } ],
+                }
+                resp = {"protocol": "component",
+                    "command": "component",
+                    "payload": payload,
+                }
+                self.sendMessage(json.dumps(resp))
+
+
+def runtime():
+    log.startLogging(sys.stdout)
+
+    factory = WebSocketServerFactory("ws://localhost:3569", debug = False)
+    factory.protocol = MyServerProtocol
+
+    reactor.listenTCP(3569, factory)
+    reactor.run()
+
+#runtime()
+
+
 if __name__ == "__main__":
 
     prog, args = sys.argv[0], sys.argv[1:]
@@ -133,3 +181,4 @@ if __name__ == "__main__":
     net = Network(load_file(path))
     net.start()
     net.run_iteration()
+
