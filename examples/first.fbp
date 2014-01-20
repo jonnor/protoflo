@@ -1,0 +1,3 @@
+
+'true' -> IN invertA(Invert) OUT -> IN invertB(Invert)
+invertB OUT -> IN str(Str) OUT -> IN output(WriteStdOut)

@@ -109,24 +109,20 @@ class Network(object):
         
 
 def load_file(path):
-    if not path.endswith(".json"):
-        raise ValueError, "Only JSON FBP format supported"
+    ext = os.path.splitext(path)[1]
+    if ext == ".fbp":
+        # TODO: implement natively
+        s = subprocess.check_output(["fbp", path])
+        return json.loads(s)
+    elif ext == ".json":
+        f = open(path, "r")
+        return json.loads(f.read())
+    else:
+        raise ValueError, "Invalid format for file %s" % path
 
-    f = open(path, "r")
-    return json.loads(f.read())
-
-
-# Test program
-def test1():
-    out = WriteStdOut()
-    inc = IncrementOne()
-    s = Str()
-    connect(inc, "out", "in", s)
-    connect(s, "out", "in", out)
-    send(inc, 1)
 
 def test2():
-    net = Network(load_file("examples/first.json"))
+    net = Network(load_file("examples/first.fbp"))
     net.start()
     net.run_iteration()
 
