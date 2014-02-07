@@ -1,0 +1,3 @@
+'3' -> A mul(Multiply), '9' -> B mul
+'15' -> A add(Add), mul OUT ->  B add
+add OUT -> IN str(Str) OUT -> IN out(WriteStdOut)

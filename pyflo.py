@@ -8,6 +8,7 @@ sys.setrecursionlimit(100)
 class Port(object):
     def __init__(self):
         self.target = None
+        self.value = None
 
 class Component(object):
     def __init__(self):
@@ -40,13 +41,60 @@ class Unary(Component):
     def receive(self, data, port):
         self.send(self._func(data), "out")
 
+class Nary(Component):
+    @staticmethod
+    def factory(inports, func):
+        return functools.partial(Nary, inports, func)
+
+    def __init__(self, inports, function):
+        Component.__init__(self)
+        self._func = function
+        self.ports = {
+            "out": Port()
+        }
+        self._inports = inports
+        for name in inports:
+            self.ports[name] = Port()
+
+    def receive(self, data, port):
+        # Store new data for @port
+        p = self.ports.get(port, None)
+        if not p:
+            raise ValueError, 'No port named %s in Nary(X)' % port
+        p.value = data
+
+        # Re-evaluate function
+        # TODO: allow None?
+        args = [self.ports[n].value for n in self._inports]
+        if not any(x is None for x in args):
+            res = self._func(*args)
+            self.send(res, "out")
+
 components = {
     "Invert": Unary.factory(lambda obj: not obj),
     "IncrementOne": Unary.factory(lambda obj: obj+1),
     "WriteStdOut": Unary.factory(lambda obj: sys.stdout.write(obj)),
     "Str": Unary.factory(lambda obj: str(obj)),
+
+    "Add": Nary.factory(["a", "b"], lambda a,b: a+b),
+    "Subtract": Nary.factory(["a", "b"], lambda a,b: a-b),
+    "Multiply": Nary.factory(["a", "b"], lambda a,b: a*b),
+    "Divide": Nary.factory(["a", "b"], lambda a,b: a/b),
 }
 
+def map_literal(data):
+    converters = [
+        lambda d: int(data),
+        lambda d: float(data),
+        lambda d: d,
+    ]
+    for conv in converters:
+        try:
+            return conv(data)
+        except (ValueError, TypeError), e:
+            continue
+
+    raise Error, 'Should never be reached'
 
 class Network(object):
     def __init__(self, graph):
@@ -69,6 +117,7 @@ class Network(object):
             tgt = conn['tgt']
             src = conn.get('src', None)
             data = conn.get('data', None)
+            data = map_literal(data)
             if src:
                 self.connect(src['process'], src['port'],
                              tgt['process'], tgt['port'])
@@ -89,7 +138,7 @@ class Network(object):
      
     def send(self, tgt, port, data):
         if not isinstance(tgt, Component):
-            tgt = self._nodes[tgt]        
+            tgt = self._nodes[tgt]
 
         ip = (tgt, port, data)
         self._msgqueue.append(ip)
