@@ -1,3 +1,8 @@
+/* PyFlo - Flow-Based Programming for Python
+ * Copyright (c) 2014 Jon Nordby <jononor@gmail.com>
+ * PyFlo may be freely distributed under the MIT license
+ */
+
 import sys, os
 import functools
 import json
@@ -160,7 +165,7 @@ class Network(object):
 def load_file(path):
     ext = os.path.splitext(path)[1]
     if ext == ".fbp":
-        # TODO: implement natively
+        # TODO: implement natively. Using pyPEG/grako?
         s = subprocess.check_output(["fbp", path])
         return json.loads(s)
     elif ext == ".json":
