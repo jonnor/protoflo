@@ -1,7 +1,7 @@
-/* PyFlo - Flow-Based Programming for Python
- * Copyright (c) 2014 Jon Nordby <jononor@gmail.com>
- * PyFlo may be freely distributed under the MIT license
- */
+# PyFlo - Flow-Based Programming for Python
+# Copyright (c) 2014 Jon Nordby <jononor@gmail.com>
+# PyFlo may be freely distributed under the MIT license
+##
 
 import sys, os
 import functools
