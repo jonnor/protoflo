@@ -7,8 +7,9 @@ import sys, os
 import functools
 import json
 import subprocess
-
-sys.setrecursionlimit(100)
+import httplib
+import uuid
+import urllib
 
 class Port(object):
     def __init__(self):
@@ -175,16 +176,20 @@ def load_file(path):
         raise ValueError, "Invalid format for file %s" % path
 
 
-from autobahn.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from autobahn.websocket.compress import PerMessageDeflateOffer, PerMessageDeflateOfferAccept
 from twisted.python import log
 from twisted.internet import reactor
 
-class MyServerProtocol(WebSocketServerProtocol):
+
+class NoFloUiProtocol(WebSocketServerProtocol):
+
 
     def onConnect(self, request):
-        pass
+        return 'noflo'
 
     def onOpen(self):
+        self.sendPing()
         pass
 
     def onClose(self, wasClean, code, reason):
@@ -199,9 +204,12 @@ class MyServerProtocol(WebSocketServerProtocol):
 
         if cmd['protocol'] == 'component' and cmd['command'] == 'list':
             for name, comp in components.items():
+                c = comp()
+                # FIXME: separate outports from inports
+                inports = [{ "id": p, "type": "all" } for p in c.ports.keys() if not p == "out"]
                 payload = { "name": name,
                         "description": "",
-                        "inPorts": [ {"id": "in", "type": "all" } ],
+                        "inPorts": inports,
                         "outPorts": [ {"id": "out", "type": "all" } ],
                 }
                 resp = {"protocol": "component",
@@ -211,28 +219,68 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.sendMessage(json.dumps(resp))
 
 
-def runtime():
+def runtime(port):
     log.startLogging(sys.stdout)
 
-    factory = WebSocketServerFactory("ws://localhost:3569", debug = False)
-    factory.protocol = MyServerProtocol
+    factory = WebSocketServerFactory("ws://localhost:"+str(port), debug = True)
+    factory.protocol = NoFloUiProtocol
 
-    reactor.listenTCP(3569, factory)
+    # Required for Chromium ~33 and newer
+    def accept(offers):
+        for offer in offers:
+            if isinstance(offer, PerMessageDeflateOffer):
+                return PerMessageDeflateOfferAccept(offer)
+    factory.setProtocolOptions(perMessageCompressionAccept = accept)
+
+    reactor.listenTCP(port, factory)
     reactor.run()
 
-#runtime()
+def register(user_id, label, ip, port):
 
+    runtime_id = str(uuid.uuid4())
+
+    conn = httplib.HTTPConnection("api.flowhub.io", 80)
+    conn.connect()
+
+    url = "/runtimes/"+runtime_id
+    headers = {"Content-type": "application/json"}
+    data = {
+        'type': 'protoflo', 'protocol': 'websocket',
+        'address': ip+":"+str(port), 'id': runtime_id,
+        'label': label, 'port': port, 'user': user_id,
+        'secret': "122223333",
+    }
+
+    conn.request("PUT", url, json.dumps(data), headers)
+    response = conn.getresponse()
+    if not response.status == 201:
+        raise ValueError("Could not create runtime " + str(response.status) + str(response.read()))
+    else:
+        print "Runtime registered with ID", runtime_id
 
 if __name__ == "__main__":
 
-    prog, args = sys.argv[0], sys.argv[1:]
-    if not len(args) == 1:
-        sys.stderr.write("Usage: %s FILE\n" % prog)
-        sys.exit(1)
+    import argparse
 
-    path = args[0]
+    parser = argparse.ArgumentParser(prog=sys.argv[0])
+    subparsers = parser.add_subparsers(dest='command', help='')
 
-    net = Network(load_file(path))
-    net.start()
-    net.run_iteration()
+    parser_register = subparsers.add_parser('register', help='Register runtime with Flowhub')
+    parser_register.add_argument('--user', type=str, help='User UUID to register runtime for', required=True)
+    parser_register.add_argument('--label', type=str, help='Label to use in UI for this runtime', default="ProtoFlo")
+    parser_register.add_argument('--ip', type=str, help='WebSocket IP for runtime', default='ws://localhost')
+    parser_register.add_argument('--port', type=int, help='WebSocket port for runtime', default=3569)
+
+    parser_runtime = subparsers.add_parser('runtime', help='Start runtime')
+    parser_runtime.add_argument('--port', type=int, help='WebSocket port for runtime', default=3569)
+
+    args = parser.parse_args(sys.argv[1:])
+    if args.command == 'register':
+        register(args.user, args.label, args.ip, args.port)
+    elif args.command == 'runtime':
+        runtime(args.port)
+    else:
+        net = Network(load_file(path))
+        net.start()
+        net.run_iteration()
 
