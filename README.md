@@ -1,6 +1,7 @@
-PyFlo
+ProtoFlo
 ======
-[Flow-based programming]() runtime for Python, compatible and integrated with [NoFlo](http://noflojs.org)
+Experiments in dataflow and Flow-based programming based on Python,
+compatible and integrated with [NoFlo](http://noflojs.org)
 
 Status
 =======
@@ -13,10 +14,6 @@ License
 =======
 MIT
 
-Milestones
-==========
-* 0.0.1: "Proof of concept" Can instantiate and run a simple graph defined by .json
-* 0.1.0: "Minimally useful" Can run a program based on some Python-tech which is not available for Node, integrated with NoFlo.
 
 TODO:
 ======

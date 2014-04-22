@@ -1,6 +1,6 @@
-# PyFlo - Flow-Based Programming for Python
+# ProtoFlo - Flow-Based Programming experiments in Python
 # Copyright (c) 2014 Jon Nordby <jononor@gmail.com>
-# PyFlo may be freely distributed under the MIT license
+# ProtoFlo may be freely distributed under the MIT license
 ##
 
 import sys, os
