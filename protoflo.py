@@ -283,13 +283,16 @@ if __name__ == "__main__":
     parser_runtime = subparsers.add_parser('runtime', help='Start runtime')
     parser_runtime.add_argument('--port', type=int, help='WebSocket port for runtime', default=3569)
 
+    parser_run = subparsers.add_parser('run', help='Run a graph non-interactively')
+    parser_run.add_argument('--file', type=str, help='Graph file .fbp|.json', required=True)
+
     args = parser.parse_args(sys.argv[1:])
     if args.command == 'register':
         register(args.user, args.label, args.ip, args.port)
     elif args.command == 'runtime':
         runtime(args.port)
-    else:
-        net = Network(load_file(path))
+    elif args.command == 'run':
+        net = Network(load_file(args.file))
         net.start()
         net.run_iteration()
 
