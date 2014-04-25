@@ -11,6 +11,10 @@ import httplib
 import uuid
 import urllib
 
+import numpy
+from scipy import misc, ndimage
+import matplotlib.pyplot as plt
+
 class Port(object):
     def __init__(self):
         self.target = None
@@ -86,6 +90,11 @@ components = {
     "Subtract": Nary.factory(["a", "b"], lambda a,b: a-b),
     "Multiply": Nary.factory(["a", "b"], lambda a,b: a*b),
     "Divide": Nary.factory(["a", "b"], lambda a,b: a/b),
+    "Numpy/Array": Nary.factory(["values"], lambda values: numpy.asarray(values)),
+    "Scipy/Lena": Nary.factory([], lambda: misc.lena()),
+    "Scipy/GaussianFilter": Nary.factory(["array", "sigma"], lambda a, s: ndimage.gaussian_filter(a, sigma=s)),
+    "Plot/ImageShow": Nary.factory(["array", "colormap"], lambda a,c: plt.imshow(a, cmap=c)),
+    "Plot/Show": Nary.factory([], lambda: plt.show()),
 }
 
 def map_literal(data):
