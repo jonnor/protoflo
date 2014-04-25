@@ -1,0 +1,4 @@
+img(Scipy/Lena) OUT -> ARRAY filter(Scipy/GaussianFilter) OUT -> ARRAY plot(Plot/ImageShow) OUT -> KICK show(Plot/Show)
+'gray' -> COLORMAP plot
+'5' -> SIGMA filter
+'true' -> KICK img
